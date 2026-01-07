@@ -1,0 +1,42 @@
+-- script d'initialisation de la base de données
+
+-- créer la table users si elle n'existe pas
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- créer un index sur le champ email
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- insérer des données tests/initiales d'users
+INSERT INTO users (username, email) VALUES
+    ('admin', 'admin@example.com'),
+    ('user1', 'user1@example.com'),
+    ('testuser', 'test@example.com')
+ON CONFLICT (username) DO NOTHING;
+
+-- créer une fonction pour mettre à jour updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- créer un trigger pour la table users
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+CREATE TRIGGER update_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- afficher message de succès
+DO $$
+BEGIN
+    RAISE NOTICE 'Base de données initialisée avec succès !';
+END $$;

@@ -1,0 +1,29 @@
+#fichier env
+.env
+*.env
+!.env.example
+
+#logs
+logs/
+*.log
+
+#données locales
+database/backup/*.sql
+
+#node modules
+node_modules/
+**/node_modules/
+
+#build
+build/
+dist/
+
+#OS
+.DS_Store
+Thumbs.db
+
+#IDE
+.vscode/
+.idea/
+*.swp
+*.swo
