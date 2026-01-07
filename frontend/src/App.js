@@ -44,7 +44,7 @@ function App() {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1>🐳 Application Dockerisée</h1>
+      <h1>Application Dockerisée</h1>
 
       {/* statut bdd */}
       <div
@@ -57,9 +57,9 @@ function App() {
       >
         <h2>Statut de la base de données</h2>
         {dbStatus ? (
-          <p style={{ color: "green" }}>✅ {dbStatus.message}</p>
+          <p style={{ color: "green" }}>{dbStatus.message}</p>
         ) : (
-          <p style={{ color: "orange" }}>⏳ Vérification en cours...</p>
+          <p style={{ color: "orange" }}>Vérification en cours...</p>
         )}
       </div>
 

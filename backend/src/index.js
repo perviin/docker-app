@@ -106,20 +106,20 @@ const server = app.listen(PORT, "0.0.0.0", () => {
 
 // gestion propre de l'arrêt
 const shutdown = () => {
-  console.log("\n⚠️  Signal d'arrêt reçu, fermeture gracieuse...");
+  console.log("\nSignal d'arrêt reçu, fermeture gracieuse...");
 
   server.close(() => {
-    console.log("✅ Serveur HTTP fermé");
+    console.log("Serveur HTTP fermé");
 
     pool.end(() => {
-      console.log("✅ Pool de connexions à la base de données fermé");
+      console.log("Pool de connexions à la base de données fermé");
       process.exit(0);
     });
   });
 
   // force la fermeture après 10 secondes
   setTimeout(() => {
-    console.error("❌ Forçage de la fermeture après timeout");
+    console.error("Forçage de la fermeture après timeout");
     process.exit(1);
   }, 10000);
 };
@@ -129,10 +129,10 @@ process.on("SIGINT", shutdown);
 
 // gestion des erreurs non capturées
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Promesse rejetée non gérée:", reason);
+  console.error("Promesse rejetée non gérée:", reason);
 });
 
 process.on("uncaughtException", (error) => {
-  console.error("❌ Exception non capturée:", error);
+  console.error("Exception non capturée:", error);
   shutdown();
 });
