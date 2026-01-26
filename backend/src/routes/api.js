@@ -80,8 +80,8 @@ router.post("/users", async (req, res) => {
       });
     }
 
-    // validation de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // validation de l'email (souple, sans tld obligatoire)
+    const emailRegex = /^[^\s@]+@[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: backend
+  name: backend
+spec:
+  replicas: 2
+  # 2 pods pour éviter la coupure
+  selector:
+    matchLabels:
+      io.kompose.service: backend
+  strategy:
+    type: RollingUpdate
+    # maj en douceur
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: C:\ProgramData\chocolatey\lib\kubernetes-kompose\tools\kompose.exe convert
+        kompose.version: 1.38.0 (a8f5d1cbd)
+      labels:
+        io.kompose.service: backend
+    spec:
+      containers:
+        - env:
+            - name: DB_HOST
+              value: database
+            - name: DB_NAME
+              value: appdb
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: DB_PASSWORD
+              # secret db, pas en clair
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: appuser
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: JWT_SECRET
+              # secret jwt, idem
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+          image: backend:1.0
+          # image versionnée
+          livenessProbe:
+            exec:
+              command:
+                - wget
+                - --quiet
+                - --tries=1
+                - --spider
+                - --timeout=5
+                - http://127.0.0.1:3000/health
+            failureThreshold: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            # prêt = reçoit du trafic
+          name: backend
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /app/logs
+              name: backend-logs
+      restartPolicy: Always
+      volumes:
+        - name: backend-logs
+          persistentVolumeClaim:
+            claimName: backend-logs
