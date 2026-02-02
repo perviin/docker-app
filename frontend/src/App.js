@@ -1,118 +1,62 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { userService, healthService } from "./services/api";
+import DbStatus from "./components/DbStatus";
+import UserForm from "./components/UserForm";
+import UserList from "./components/UserList";
+import "./App.css";
 
 function App() {
   const [users, setUsers] = useState([]);
   const [dbStatus, setDbStatus] = useState(null);
-  const [newUser, setNewUser] = useState({ username: "", email: "" });
-  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [error, setError] = useState(null);
 
-  // test connexion bdd au chargement
+  // test connexion DB
   useEffect(() => {
-    axios
-      .get("/api/db-test")
-      .then((response) => setDbStatus(response.data))
-      .catch((error) => console.error("Erreur DB:", error));
+    healthService
+      .dbTest()
+      .then(setDbStatus)
+      .catch(() => setDbStatus({ message: "Erreur DB", status: "error" }));
   }, []);
 
-  // charger les users
-  const loadUsers = () => {
-    setLoading(true);
-    axios
-      .get("/api/users")
-      .then((response) => {
-        setUsers(response.data.data || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Erreur:", error);
-        setLoading(false);
-      });
+  const loadUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      setError(null);
+      const data = await userService.getAll();
+      setUsers(data.data || []);
+    } catch (err) {
+      setError("Impossible de charger les utilisateurs");
+    } finally {
+      setLoadingUsers(false);
+    }
   };
 
-  // créer un user
-  const createUser = (e) => {
-    e.preventDefault();
-    axios
-      .post("/api/users", newUser)
-      .then(() => {
-        setNewUser({ username: "", email: "" });
-        loadUsers();
-      })
-      .catch((error) => console.error("Erreur:", error));
+  const createUser = async (user) => {
+    try {
+      await userService.create(user);
+      loadUsers();
+      setError(null);
+    } catch (err) {
+      setError("Erreur lors de la création de l'utilisateur");
+    }
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1>Application Dockerisée</h1>
-
-      {/* statut bdd */}
-      <div
-        style={{
-          padding: "10px",
-          background: "#f0f0f0",
-          borderRadius: "5px",
-          marginBottom: "20px",
-        }}
-      >
-        <h2>Statut de la base de données</h2>
-        {dbStatus ? (
-          <p style={{ color: "green" }}>{dbStatus.message}</p>
-        ) : (
-          <p style={{ color: "orange" }}>Vérification en cours...</p>
-        )}
+    <div className="app-container">
+      <div className="app-header">
+        <h1>Gestion d'Utilisateurs</h1>
+        <p>Application Dockerisée</p>
       </div>
 
-      {/* form création user */}
-      <div style={{ marginBottom: "20px" }}>
-        <h2>Créer un utilisateur</h2>
-        <form onSubmit={createUser}>
-          <input
-            type="text"
-            placeholder="Nom d'utilisateur"
-            value={newUser.username}
-            onChange={(e) =>
-              setNewUser({ ...newUser, username: e.target.value })
-            }
-            required
-            style={{ padding: "8px", marginRight: "10px" }}
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={newUser.email}
-            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-            required
-            style={{ padding: "8px", marginRight: "10px" }}
-          />
-          <button type="submit" style={{ padding: "8px 15px" }}>
-            Créer
-          </button>
-        </form>
-      </div>
+      <div className="app-content">
+        <DbStatus dbStatus={dbStatus} />
 
-      {/* liste users */}
-      <div>
-        <h2>Liste des utilisateurs</h2>
-        <button
-          onClick={loadUsers}
-          disabled={loading}
-          style={{ padding: "8px 15px", marginBottom: "10px" }}
-        >
-          {loading ? "Chargement..." : "Charger les utilisateurs"}
-        </button>
+        <UserForm onCreate={createUser} />
 
-        {users.length > 0 ? (
-          <ul>
-            {users.map((user) => (
-              <li key={user.id}>
-                {user.username} - {user.email}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Aucun utilisateur à afficher</p>
-        )}
+        <UserList users={users} loading={loadingUsers} onReload={loadUsers} />
+
+        {error && <div className="error-message">{error}</div>}
       </div>
     </div>
   );
